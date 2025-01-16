@@ -14,7 +14,6 @@ load_dotenv()
 NEO4J_URI = os.getenv("NEO4J_URI_OPENAI", "bolt://localhost:7687")
 NEO4J_USER = os.getenv("NEO4J_USERNAME_OPENAI", "neo4j")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD_OPENAI", "your_password")
-
 driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
 
 # Configure LLM
@@ -24,28 +23,17 @@ llm = OpenAILLM(
         "temperature": 0  # Lower temperature for deterministic output
     }
 )
-
 # Initialize embedding model
 embedder = OpenAIEmbeddings(
     api_key=os.getenv("OPENAI_API_KEY"),  # Ensure API key is correctly loaded
     model="text-embedding-ada-002"
 )
-
-#Graph-Retriever
-graph_retriever = VectorCypherRetriever(
+#Vector-Retriever
+vector_retriever = VectorRetriever(
     driver=driver,
     index_name="text_embeddings",
     embedder=embedder,
-    retrieval_query="""
-    MATCH (chunk)<-[:FROM_CHUNK]-(entity)-[relList:!FROM_CHUNK]-{1,2}(nb)
-    UNWIND relList AS rel
-    WITH collect(DISTINCT chunk) AS chunks, collect(DISTINCT rel) AS rels, collect(DISTINCT entity.name) AS visited_node_names
-    RETURN apoc.text.join([c IN chunks | c.text], '\n') +
-        apoc.text.join([r IN rels |
-        startNode(r).name+' - '+type(r)+' '+r.details+' -> '+endNode(r).name],
-        '\n') AS info,
-        visited_node_names
-    """
+    return_properties=["text"]
 )
 
 # RAG template
@@ -63,14 +51,20 @@ rag_template = RagTemplate(
 )
 
 # Initialize GraphRAG
-graph_rag = GraphRAG(llm=llm, retriever=graph_retriever, prompt_template=rag_template)
+vector_rag = GraphRAG(llm=llm, retriever=vector_retriever, prompt_template=rag_template)
 
+def vectorRAG (q):
+    print("vectorRAG")
+    print(f"Received query: {q}")
+    result = vector_rag.search(q, retriever_config={'top_k': 5}).answer
+    return result
 # Example Query
-query = "What are the input parameters and the return type of function Centroid?"
-try:
-    print("GRAPH")
-    # response=graph_rag.search(query, retriever_config={'top_k': 5}, return_context=True)
-    # (print(response))
-    print(graph_rag.search(query, retriever_config={'top_k': 5}).answer )
-except Exception as e:
-    print(f"Error during query: {e}")
+# query = ("What are the input parameters and the return type of function Centroid3D?")
+# try:
+#     print("VECTOR")
+#     print(vector_rag.search(query, retriever_config={'top_k': 5}).answer)
+#
+# except Exception as e:
+#     print(f"Error during query: {e}")
+# answer = vectorRAG("What are the input parameters and the return type of function Centroid3D?")
+# print (answer)

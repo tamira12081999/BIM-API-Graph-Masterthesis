@@ -62,15 +62,24 @@ rag_template = RagTemplate(
 ''', expected_inputs=['query_text', 'context']
 )
 
+
 # Initialize GraphRAG
 graph_rag = GraphRAG(llm=llm, retriever=graph_retriever, prompt_template=rag_template)
 
-# Example Query
-query = "What are the input parameters and the return type of function Centroid?"
-try:
-    print("GRAPH")
-    # response=graph_rag.search(query, retriever_config={'top_k': 5}, return_context=True)
-    # (print(response))
-    print(graph_rag.search(query, retriever_config={'top_k': 5}).answer )
-except Exception as e:
-    print(f"Error during query: {e}")
+
+def graphRAG (q):
+    print("runGraphRAG")
+    print(f"Received query: {q}")
+    result = graph_rag.search(q, retriever_config={'top_k': 2}).answer
+    return result
+# # Example Query
+# query = "What are the input parameters and the return type of function Centroid?"
+# try:
+#     print("GRAPH")
+#     # response=graph_rag.search(query, retriever_config={'top_k': 5}, return_context=True)
+#     # (print(response))
+#     print(graph_rag.search(query, retriever_config={'top_k': 5}).answer )
+# except Exception as e:
+#     print(f"Error during query: {e}")
+answer = graphRAG("What are the input parameters and the return type of function Centroid3D?")
+print (answer)

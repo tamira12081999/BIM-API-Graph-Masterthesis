@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 from neo4j import GraphDatabase
 from pathlib import Path
-
+import asyncio
 # Import Neo4j GraphRAG components
 from neo4j_graphrag.generation import RagTemplate
 from neo4j_graphrag.llm import OpenAILLM
@@ -13,16 +13,14 @@ from neo4j_graphrag.experimental.components.text_splitters.fixed_size_splitter i
 from neo4j_graphrag.experimental.pipeline.kg_builder import SimpleKGPipeline
 from neo4j_graphrag.retrievers import VectorCypherRetriever, VectorRetriever
 from neo4j_graphrag.indexes import create_vector_index
-
-
 # Load environment variables
 load_dotenv()
+from langchain.text_splitter import CharacterTextSplitter
 
 # Setup Neo4j driver
-NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
-NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
-NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "your_password")
-
+NEO4J_URI = os.getenv("NEO4J_URI_OPENAI", "bolt://localhost:7687")
+NEO4J_USER = os.getenv("NEO4J_USERNAME_OPENAI", "neo4j")
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD_OPENAI", "your_password")
 driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
 
 # Configure LLM
@@ -34,14 +32,13 @@ llm = OpenAILLM(
     }
 )
 # Initialize embedding model
-# embedder = OpenAIEmbeddings()
 embedder = OpenAIEmbeddings(
     api_key=os.getenv("OPENAI_API_KEY"),  # Ensure API key is correctly loaded
     model="text-embedding-ada-002"
 )
 # Define node labels
 basic_node_labels = ["Function", "Category", "Datatype", "Parameter", "Document" ]
-function_node_labels = ["ReturnType", "DataType", "Datatype", "Parameter", "Document" ]
+function_node_labels = ["ReturnType", "DataType", "Datatype", "Parameter", "Document", "Description", "Python", "VectorScript"]
 
 
 node_labels = basic_node_labels + function_node_labels
@@ -80,12 +77,12 @@ Input text:
 
 # Initialize the knowledge graph builder
 DOCS_PATH = os.getenv('DOCS_PATH', '.')
-file_path_txt = Path(DOCS_PATH) / 'data/vs-short.txt'
+file_path_txt = Path(DOCS_PATH) / 'data/vs-short-11-2.txt'
 print(file_path_txt.exists())
 kg_builder = SimpleKGPipeline(
     llm=llm,
     driver=driver,
-    text_splitter=FixedSizeSplitter(chunk_size=500, chunk_overlap=100),
+    text_splitter=FixedSizeSplitter(chunk_size=450, chunk_overlap=100),
     embedder=embedder,
     prompt_template=prompt_template,
     entities=node_labels,
@@ -117,53 +114,3 @@ create_vector_index(
     similarity_fn="cosine"
 )
 
-# Initialize retrievers
-vector_retriever = VectorRetriever(
-    driver=driver,
-    index_name="text_embeddings",
-    embedder=embedder,
-    return_properties=["text"]
-)
-
-graph_retriever = VectorCypherRetriever(
-    driver=driver,
-    index_name="text_embeddings",
-    embedder=embedder,
-    retrieval_query="""
-    MATCH (chunk)<-[:FROM_CHUNK]-(entity)-[relList:!FROM_CHUNK]-{1,2}(nb)
-    UNWIND relList AS rel
-    WITH collect(DISTINCT chunk) AS chunks, collect(DISTINCT rel) AS rels
-    RETURN apoc.text.join([c IN chunks | c.text], '\n') +
-        apoc.text.join([r IN rels |
-        startNode(r).name+' - '+type(r)+' '+r.details+' -> '+endNode(r).name],
-        '\n') AS info
-    """
-)
-
-# RAG template
-rag_template = RagTemplate(
-    template='''Answer the Question using the following Context. Only respond with information mentioned in the Context.
-
-# Question:
-{query_text}
-
-# Context:
-{context}
-
-# Answer:
-''', expected_inputs=['query_text', 'context']
-)
-
-# Initialize GraphRAG
-vector_rag = GraphRAG(llm=llm, retriever=vector_retriever, prompt_template=rag_template)
-graph_rag = GraphRAG(llm=llm, retriever=graph_retriever, prompt_template=rag_template)
-
-# Example Query
-query = "Can you summarize Abs function including parameters and category?"
-try:
-    print("VECTOR")
-    print(vector_rag.search(query, retriever_config={'top_k': 5}).answer)
-    print("GRAPH")
-    print(graph_rag.search(query, retriever_config={'top_k': 5}).answer)
-except Exception as e:
-    print(f"Error during query: {e}")
