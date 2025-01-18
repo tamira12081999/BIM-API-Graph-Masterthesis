@@ -11,9 +11,9 @@ from neo4j_graphrag.retrievers import VectorCypherRetriever, VectorRetriever
 load_dotenv()
 
 # Setup Neo4j driver
-NEO4J_URI = os.getenv("NEO4J_URI_OPENAI", "bolt://localhost:7687")
-NEO4J_USER = os.getenv("NEO4J_USERNAME_OPENAI", "neo4j")
-NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD_OPENAI", "your_password")
+NEO4J_URI = os.getenv("NEO4J_URI_B", "bolt://localhost:7687")
+NEO4J_USER = os.getenv("NEO4J_USERNAME_B", "neo4j")
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD_B", "your_password")
 driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
 
 # Configure LLM

@@ -3,10 +3,11 @@ import json
 from dotenv import load_dotenv
 from pathlib import Path
 from langchain_community.graphs import Neo4jGraph
+load_dotenv()
 from neo4j import GraphDatabase
-NEO4J_URI = os.getenv('NEO4J_URI_OPENAI')
-NEO4J_USERNAME = os.getenv('NEO4J_USERNAME_OPENAI')
-NEO4J_PASSWORD = os.getenv('NEO4J_PASSWORD_OPENAI')
+NEO4J_URI = os.getenv('NEO4J_URI_B')
+NEO4J_USERNAME = os.getenv('NEO4J_USERNAME_B')
+NEO4J_PASSWORD = os.getenv('NEO4J_PASSWORD_B')
 #Name of the connected graph:
 graph = Neo4jGraph(
     url=NEO4J_URI,
@@ -14,11 +15,11 @@ graph = Neo4jGraph(
     password=NEO4J_PASSWORD,
     )
 # Load environment variables
-load_dotenv()
+
 
 # Default folder path from environment variable
 DOCS_PATH = os.getenv('DOCS_PATH')
-default_input_path = Path(DOCS_PATH) / 'vs-knowledge-graph/data/vs.json'
+default_input_path = Path(DOCS_PATH) / 'vs-knowledge-graph/data/vs-Approach-B.json'
 
 
 def load_and_process_json(input_path):

@@ -6,8 +6,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 DOCS_PATH = os.getenv('DOCS_PATH')
-file_path = Path(DOCS_PATH) / 'data/vs.txt'
-output_path = Path(DOCS_PATH) / 'data/vs.json'
+file_path = Path(DOCS_PATH) / 'data/vs-Approach-B.txt'
+output_path = Path(DOCS_PATH) / 'data/vs-Approach-B.json'
 
 """Keywords for extraction line"""
 keyword_split_function = "\ndef "

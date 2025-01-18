@@ -9,9 +9,9 @@ from langchain.prompts import PromptTemplate
 #llm with GPT
 llm = ChatOpenAI(temperature=0)
 #Chatbot-Graph
-NEO4J_URI = os.getenv("NEO4J_URI_OPENAI", "bolt://localhost:7687")
-NEO4J_USER = os.getenv("NEO4J_USERNAME_OPENAI", "neo4j")
-NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD_OPENAI", "your_password")
+NEO4J_URI = os.getenv("NEO4J_URI_B", "bolt://localhost:7687")
+NEO4J_USER = os.getenv("NEO4J_USERNAME_B", "neo4j")
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD_B", "your_password")
 #Name of the connected graph:
 graph = Neo4jGraph(
     url=NEO4J_URI,

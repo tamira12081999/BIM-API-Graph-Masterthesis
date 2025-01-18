@@ -13,15 +13,63 @@ load_dotenv()
 DOCS_PATH = os.getenv('DOCS_PATH')
 output_cypher_path = Path(DOCS_PATH) / 'data/cypher_queries.json'
 #Chatbot-Graph
-NEO4J_URI = os.getenv('NEO4J_URI_OPENAI')
-NEO4J_USERNAME = os.getenv('NEO4J_USERNAME_OPENAI')
-NEO4J_PASSWORD = os.getenv('NEO4J_PASSWORD_OPENAI')
+NEO4J_URI = os.getenv('NEO4J_URI_B')
+NEO4J_USERNAME = os.getenv('NEO4J_USERNAME_B')
+NEO4J_PASSWORD = os.getenv('NEO4J_PASSWORD_B')
 #Name of the connected graph:
 graph = Neo4jGraph(
     url=NEO4J_URI,
     username=NEO4J_USERNAME,
     password=NEO4J_PASSWORD,
     )
+
+# Define a list of names to filter
+NAMES_TO_FILTER = ["ActiveClass"
+"ActLayer"
+"ActSSheet"
+"ActSymDef"
+"ActSymDefN"
+"Add2DVertex"
+"Add3DPt"
+"BeginPoly3D"
+"EndPoly3D"
+"AddAssociation"
+"AddButtonMode"
+"AddCavity"
+"AddChoice"
+"AddCustomTexPart"
+"AddHole"
+"Wall"
+"WallArea_Gross"
+"WallArea_Net"
+"WallAverageHeight"
+"WallCap"
+"WallFootPrint"
+"WallHeight"
+"WallPeak"
+"WallThickness"
+"WallTo"
+"WallWidth"
+"WebDlgEnableConsole"
+"nableConsole"
+"Width"
+"BeginRoof"
+"vs.BeginRoof"
+"GetRoofAttributes"
+"GetRoofEdge"
+"GetRoofElementType"
+"GetRoofFaceAttrib"
+"GetRoofFaceCoords"
+"GetRoofPreferences"
+"GetRoofPrefStyle"
+"HANDLE"
+"GetRoofStyle"
+"GetRoofVertices"
+"GetRoundingBase"
+"CreateRoof"
+"ateRoof"
+"CreateRoofStyle"
+"Create Roof Style"]  # Replace with the actual names you want to filter for
 
 # Function to scrape relevant links from the main page
 def get_all_links(base_url):
@@ -53,6 +101,7 @@ def get_all_links(base_url):
     return links
 
 # Function to extract Python examples and functions
+# Updated function to extract Python examples and filter by names
 def extract_python_examples(page_url):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
@@ -63,6 +112,13 @@ def extract_python_examples(page_url):
         return set()
 
     soup = BeautifulSoup(response.text, 'html.parser')
+    page_text = soup.get_text().lower()
+
+    # Check if any of the specified names are present in the page
+    if not any(name.lower() in page_text for name in NAMES_TO_FILTER):
+        print(f"Skipping {page_url} as it does not contain specified names.")
+        return set()
+
     code_blocks = soup.find_all('pre')
     examples = []
 
@@ -103,6 +159,7 @@ def store_connections(base_function, related_functions):
     return connections
 
 # Main process
+# Main process remains mostly the same
 def scrape_and_generate_queries(base_url, output_cypher):
     links = get_all_links(base_url)
     if not links:

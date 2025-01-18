@@ -18,9 +18,9 @@ load_dotenv()
 from langchain.text_splitter import CharacterTextSplitter
 
 # Setup Neo4j driver
-NEO4J_URI = os.getenv("NEO4J_URI_OPENAI", "bolt://localhost:7687")
-NEO4J_USER = os.getenv("NEO4J_USERNAME_OPENAI", "neo4j")
-NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD_OPENAI", "your_password")
+NEO4J_URI = os.getenv("NEO4J_URI_B", "bolt://localhost:7687")
+NEO4J_USER = os.getenv("NEO4J_USERNAME_B", "neo4j")
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD_B", "your_password")
 driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
 
 # Configure LLM
@@ -77,7 +77,7 @@ Input text:
 
 # Initialize the knowledge graph builder
 DOCS_PATH = os.getenv('DOCS_PATH', '.')
-file_path_txt = Path(DOCS_PATH) / 'data/vs-short-11-2.txt'
+file_path_txt = Path(DOCS_PATH) / 'data/vs-Approach-B.txt'
 print(file_path_txt.exists())
 kg_builder = SimpleKGPipeline(
     llm=llm,

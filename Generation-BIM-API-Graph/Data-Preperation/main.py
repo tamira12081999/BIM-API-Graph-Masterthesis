@@ -10,8 +10,8 @@ from txtToJson import run_extraction
 load_dotenv()
 DOCS_PATH = os.getenv('DOCS_PATH')
 print(DOCS_PATH)
-file_path_txt = Path(DOCS_PATH) / 'data/vs.txt'
-file_path_json = Path(DOCS_PATH) / 'data/vs.json'
+file_path_txt = Path(DOCS_PATH) / 'data/vs-Approach-B.txt'
+file_path_json = Path(DOCS_PATH) / 'data/vs-Approach-B.json'
 output_cypher_path = Path(DOCS_PATH) / 'data/cypher_queries.json'
 BASE_URL = "https://developer.vectorworks.net/index.php?title=VS:Function_Reference"
 CYPHER_PATH = Path(DOCS_PATH) / 'data/cypher_queries.json'
