@@ -2,24 +2,15 @@ import os
 import json
 from dotenv import load_dotenv
 from pathlib import Path
-from langchain_community.graphs import Neo4jGraph
-load_dotenv()
 from neo4j import GraphDatabase
-NEO4J_URI = os.getenv('NEO4J_URI_B')
-NEO4J_USERNAME = os.getenv('NEO4J_USERNAME_B')
-NEO4J_PASSWORD = os.getenv('NEO4J_PASSWORD_B')
-#Name of the connected graph:
-graph = Neo4jGraph(
-    url=NEO4J_URI,
-    username=NEO4J_USERNAME,
-    password=NEO4J_PASSWORD,
-    )
-# Load environment variables
+from .graph import vs_graph
 
+# Load environment variables
+load_dotenv()
 
 # Default folder path from environment variable
 DOCS_PATH = os.getenv('DOCS_PATH')
-default_input_path = Path(DOCS_PATH) / 'data/vs-Approach-B.json'
+default_input_path = Path(DOCS_PATH) / 'vs-knowledge-graph/data/vs.json'
 
 
 def load_and_process_json(input_path):
@@ -29,7 +20,6 @@ def load_and_process_json(input_path):
     # Load JSON file directly
     with open(input_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
-        print("data loaded")
 
     # Process each item in the JSON list
     for item in data:
@@ -75,7 +65,7 @@ def create_or_merge_nodes(properties):
     """
     Create or merge nodes in the Neo4j database for a function and its metadata.
     """
-    graph.query("""
+    vs_graph.query("""
         MERGE (d:Document {id: $filename})
         MERGE (f:Function {name: $function_name})
         ON CREATE SET f.return = COALESCE($return_type, "None"),
@@ -83,11 +73,6 @@ def create_or_merge_nodes(properties):
                       f.description = $description, 
                       f.python = $python, 
                       f.vector_script = $vector_script
-        ON MATCH SET f.return = COALESCE($return_type, f.return),
-                 f.function_id = COALESCE($function_id, f.function_id), 
-                 f.description = COALESCE($description, f.description), 
-                 f.python = COALESCE($python, f.python), 
-                 f.vector_script = COALESCE($vector_script, f.vector_script)
         MERGE (cat:Category {name: $category})
         MERGE (d)<-[:FUNCTION_OF]-(f)
         MERGE (f)-[:BELONGS_TO]->(cat)
@@ -115,7 +100,7 @@ def add_parameter_node(param, function_name):
     }
 
     # Execute Neo4j query for parameter
-    graph.query("""
+    vs_graph.query("""
         MERGE (p:Parameter {name: $param_name})
         ON CREATE SET p.datatype = $param_datatype, 
                       p.description = $param_description
@@ -132,8 +117,5 @@ def process_json_file(input_file=None):
     Process the specified JSON file or the default one and load its data into the Neo4j database.
     """
     if not input_file:
-        print("default")
         input_file = default_input_path
     load_and_process_json(input_file)
-
-process_json_file(default_input_path)

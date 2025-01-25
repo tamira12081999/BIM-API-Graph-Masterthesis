@@ -1,5 +1,5 @@
-from llm import llm
-from graph import graph
+from tools.llm import llm
+from tools.graph import graph
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.prompts import PromptTemplate
 from langchain.schema import StrOutputParser
@@ -11,8 +11,8 @@ from langchain import hub
 from utils import get_session_id
 from uses import run_uses
 
-from vector import vectorRAG
-from cypher import graphRAG
+from vector import find_chunk
+from cypher import run_cypher
 from langchain.tools import StructuredTool
 from pydantic import BaseModel, Field
 
@@ -25,8 +25,8 @@ class ExplainMeInput(BaseModel):
 
 explain_me_tool = StructuredTool.from_function(
     name="Semantic Search",
-    description="Performs a VectorRAG retrieval query on the graph.",
-    func=vectorRAG,
+    description="Use embeddings and vector index to find other potentially related functions. Given a query string, return relevant details.",
+    func=find_chunk,
     args_schema=ExplainMeInput,
     response_format="content"
 )
@@ -36,8 +36,8 @@ class ListAllInput(BaseModel):
 
 list_all_tool = StructuredTool.from_function(
     name="Graph Query",
-    description="Perform GraphRAG retrieval on the graph.",
-    func=graphRAG,
+    description="Search for special nodes and relations in the graph using the provided keywords. Result: List with nodes in the graph use the result to provide an answer.",
+    func=run_cypher,
     args_schema=ListAllInput,
 
     response_format = "content"
@@ -69,8 +69,8 @@ You are a helpful assistant specialized in aiding Vectorworks developers. Your p
 
 ## Tool-Usage Guidelines
 Use the tools listed below as needed to find functions, parameters, data types, or other requested information. Follow this sequence when using tools:
-1. **General Graph Query**: GraphRAG - Given the input, query the graph database for special nodes and relationships.
-2. **Semantic Search**: VectorRAG - Use embeddings and a vector index to find relevant functions, parameters, and data types.
+1. **Semantic Search**: Use embeddings and a vector index to find relevant functions, parameters, and data types.
+2. **General Graph Query**: Given the input, query the graph database for special nodes and relationships.
 3. **Connected Example Query**: Use this after the other queries to find functions related to the previously obtained results. This leverages [USES] relationships.
 
 ------
@@ -98,11 +98,22 @@ Final Answer: [Your final answer here]
 
 ## Answering Guidelines
 Follow these case-specific guidelines:
-- Use all three tools to retrieve the most accurate answer. 
-- Return the results as bullet-pointed lists or as clear, full sentences.
-- You must provide a code implementation in Python using the python property.
-- If related functions can be found, use the **Connected Example Query** to list them under "Other Helpful Functions".
 
+- **List all/Find all:**
+  Use the **Graph Query** tool to find categories, parameters, etc..
+  Return the results as bullet-pointed lists or as clear, full sentences.
+
+- **Explain me:**
+  Use **Semantic Search** tool to gather definitions, usage details. 
+  Use the function_names from Semantic Search for **Graph Query** tool input.
+  Provide clear, full-sentence explanations.
+  You must provide a code implementation in Python using the python property.
+
+- **What/How:**
+  Use the **Semantic Search** tools to determine input parameters or return data types.
+  Use the function_names from Semantic Search for **Graph Query** tool input.
+  Provide clear, full-sentence explanations and code implementation in Python.
+  If related functions can be found, use the **Connected Example Query** to list them under "Other Helpful Functions".
 
 ## Code Implementation Guideline
 When providing code samples, import Vectorworks packages from `vs`.
